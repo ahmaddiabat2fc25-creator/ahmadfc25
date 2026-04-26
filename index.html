@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TICH</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <style>
+    .qr-btn {
+      width: 45px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #082c49, #0b77b7);
+      color: white;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+
+    .qr-box {
+      display: none;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .qr-box canvas {
+      background: white;
+      padding: 10px;
+      border-radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(rgba(4, 22, 38, 0.72), rgba(4, 22, 38, 0.72)),
+        url("logo.png") center/420px no-repeat,
+        linear-gradient(135deg, #071b2c, #0d5c8f);
+      padding: 20px;
+    }
+
+    .page {
+      min-height: calc(100vh - 40px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .page.active {
+      display: flex;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 430px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 30px;
+      padding: 30px 28px;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.35);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 15px 0 28px;
+      font-size: 34px;
+      color: #082c49;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      margin-bottom: 28px;
+      color: #61758a;
+      font-size: 15px;
+    }
+
+    input, select {
+      width: 100%;
+      height: 58px;
+      border: 2px solid #d8e3ee;
+      border-radius: 18px;
+      padding: 0 18px;
+      font-size: 18px;
+      outline: none;
+      background: #f8fbff;
+      color: #082c49;
+      transition: 0.25s;
+      margin-bottom: 18px;
+      font-weight: bold;
+    }
+
+    select {
+      appearance: none;
+      background:
+        linear-gradient(45deg, transparent 50%, #082c49 50%),
+        linear-gradient(135deg, #082c49 50%, transparent 50%),
+        #f8fbff;
+      background-position: 18px 25px, 10px 25px, 0 0;
+      background-size: 8px 8px, 8px 8px, 100%;
+      background-repeat: no-repeat;
+    }
+
+    input:focus, select:focus {
+      border-color: #0b77b7;
+      background-color: white;
+      box-shadow: 0 0 0 4px rgba(11, 119, 183, 0.13);
+    }
+
+    .hint {
+      margin-top: -10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #d97706;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .error {
+      display: none;
+      margin-bottom: 12px;
+      color: #dc2626;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    button {
+      width: 100%;
+      height: 55px;
+      border: none;
+      border-radius: 17px;
+      font-size: 19px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    .login-btn,
+    .main-btn {
+      background: linear-gradient(135deg, #082c49, #0b77b7);
+      color: white;
+      margin-top: 8px;
+    }
+
+    .guest-btn {
+      background: #eef5fb;
+      color: #082c49;
+      margin-top: 13px;
+      border: 1px solid #cdddea;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .back-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #f8fbff;
+      color: #082c49;
+      font-size: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .profile {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #082c49, #0b77b7);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      border: 3px solid #d8e3ee;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+    }
+
+    .stats-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 22px 0;
+    }
+
+    .stat-card {
+      height: 125px;
+      border-radius: 18px;
+      background: #f8fbff;
+      border: 2px solid #d8e3ee;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .stat-card span {
+      color: #082c49;
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .stat-card strong {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      background: white;
+    }
+
+    .present strong {
+      color: #16a34a;
+      border: 5px solid #16a34a;
+    }
+
+    .absent strong {
+      color: #dc2626;
+      border: 5px solid #dc2626;
+    }
+
+    .open-camera {
+      height: 62px;
+      font-size: 24px;
+      border-radius: 18px;
+      margin-top: 10px;
+    }
+
+    .close-camera {
+      height: 55px;
+      font-size: 20px;
+      border-radius: 18px;
+      margin-top: 10px;
+      background: #dc2626;
+      color: white;
+      display: none;
+    }
+
+    #qr-reader {
+      width: 100%;
+      border-radius: 18px;
+      margin-top: 15px;
+      display: none;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .avatar-big {
+      width: 125px;
+      height: 125px;
+      margin: 5px auto 15px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #082c49, #0b77b7);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 58px;
+      border: 6px solid #eef5fb;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+    }
+
+    .info-box {
+      width: 100%;
+      min-height: 55px;
+      border: 1.8px solid #d8e3ee;
+      border-radius: 16px;
+      background: #f8fbff;
+      margin-bottom: 15px;
+      padding: 15px;
+      text-align: right;
+      color: #082c49;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .logout-btn {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      margin-top: 14px;
+    }
+
+    .details-title {
+      color: #082c49;
+      font-size: 27px;
+      font-weight: bold;
+      margin-bottom: 18px;
+    }
+
+    .details-count {
+      width: 85px;
+      height: 85px;
+      border-radius: 50%;
+      background: white;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 35px;
+      font-weight: bold;
+      border: 7px solid #0b77b7;
+      color: #082c49;
+    }
+
+    .details-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .small-btn {
+      background: #eef5fb;
+      color: #082c49;
+      border: 1px solid #cdddea;
+      height: 55px;
+    }
+
+    .student-list {
+      margin-top: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<section id="loginPage" class="page active">
+  <div class="card">
+    <h1>TICH</h1>
+    <p class="subtitle"> نضام الحضور و الغياب للطلبه من خلال QR</p>
+
+    <form onsubmit="return loginUser()">
+      <input type="text" placeholder="الرقم الوطني" required>
+
+      <input type="password" id="password" placeholder="كلمة السر" required>
+      <div class="hint">يجب أن تبدأ كلمة السر بـ Taaa@</div>
+
+      <div class="error" id="errorMsg">كلمة السر غير صحيحة</div>
+
+      <button class="login-btn">تسجيل الدخول</button>
+      <button type="button" class="guest-btn" onclick="goToSecondPage()">الدخول كضيف</button>
+    </form>
+  </div>
+</section>
+
+<section id="secondPage" class="page">
+  <div class="card">
+
+    <div class="top-bar">
+      <button class="back-btn" onclick="goToLogin()">⟵</button>
+      <div class="profile" onclick="goToProfile()">👤</div>
+    </div>
+
+    <select>
+      <option>الصف</option>
+      <option>الصف الأول</option>
+      <option>الصف الثاني</option>
+      <option>الصف الثالث</option>
+      <option>الصف الرابع</option>
+      <option>الصف الخامس</option>
+      <option>الصف السادس</option>
+      <option>الصف السابع</option>
+      <option>الصف الثامن</option>
+      <option>الصف التاسع</option>
+      <option selected>الصف العاشر</option>
+    </select>
+
+    <select>
+      <option>الشعبة</option>
+      <option selected>الشعبة أ</option>
+      <option>الشعبة ب</option>
+      <option>الشعبة ج</option>
+      <option>الشعبة د</option>
+    </select>
+
+    <div class="stats-box">
+      <div class="stat-card present" onclick="openDetails('present')">
+        <span>الحضور</span>
+        <strong id="presentCount">0</strong>
+      </div>
+
+      <div class="stat-card absent" onclick="openDetails('absent')">
+        <span>الغياب</span>
+        <strong id="absentCount">4</strong>
+      </div>
+    </div>
+
+    <button class="main-btn open-camera" onclick="openCamera()">فتح الكاميرا</button>
+    <button class="close-camera" id="closeCameraBtn" onclick="closeCamera()">إغلاق الكاميرا</button>
+
+    <div id="qr-reader"></div>
+
+  </div>
+</section>
+
+<section id="detailsPage" class="page">
+  <div class="card">
+
+    <div class="top-bar">
+      <button class="back-btn" onclick="goToSecondPage()">⟵</button>
+      <div class="profile" onclick="goToAddStudent()">+</div>
+    </div>
+
+    <div class="details-title" id="detailsTitle">قائمة الحضور</div>
+
+    <div class="details-count" id="detailsCount">0</div>
+
+    <div class="student-list" id="studentList"></div>
+
+    <div class="details-buttons">
+      <button class="small-btn" onclick="exportToExcel()">تصدير البيانات</button>
+      <button class="small-btn" onclick="goToSecondPage()">رجوع</button>
+    </div>
+
+  </div>
+</section>
+
+<section id="profilePage" class="page">
+  <div class="card">
+
+    <div class="top-bar">
+      <button class="back-btn" onclick="goToSecondPage()">⟵</button>
+    </div>
+
+    <div class="avatar-big">👤</div>
+
+    <div class="info-box">اسم المعلم: محمد أحمد</div>
+    <div class="info-box">الرقم الوطني: 123456789</div>
+
+    <button class="logout-btn" onclick="goToLogin()">تسجيل الخروج</button>
+  </div>
+</section>
+
+<section id="addStudentPage" class="page">
+  <div class="card">
+
+    <div class="top-bar">
+      <button class="back-btn" onclick="goToDetailsPage()">⟵</button>
+      <div class="profile">+</div>
+    </div>
+
+    <div class="details-title">إضافة طالب جديد</div>
+
+    <input type="text" id="studentNameInput" placeholder="اسم الطالب">
+
+    <select id="studentGradeInput">
+      <option>الصف</option>
+      <option>الصف الأول</option>
+      <option>الصف الثاني</option>
+      <option>الصف الثالث</option>
+      <option>الصف الرابع</option>
+      <option>الصف الخامس</option>
+      <option>الصف السادس</option>
+      <option>الصف السابع</option>
+      <option>الصف الثامن</option>
+      <option>الصف التاسع</option>
+      <option selected>الصف العاشر</option>
+    </select>
+
+    <select id="studentSectionInput">
+      <option>الشعبة</option>
+      <option selected>الشعبة أ</option>
+      <option>الشعبة ب</option>
+      <option>الشعبة ج</option>
+      <option>الشعبة د</option>
+    </select>
+
+    <button class="main-btn" onclick="addNewStudent()">إضافة الطالب</button>
+
+  </div>
+</section>
+
+<section id="qrPage" class="page">
+  <div class="card">
+
+    <div class="top-bar">
+      <button class="back-btn" onclick="goToDetailsPage()">⟵</button>
+      <div class="profile">QR</div>
+    </div>
+
+    <div class="details-title">QR الطالب</div>
+
+    <div class="info-box" id="qrStudentName"></div>
+
+    <div class="qr-box" id="qrBox">
+      <canvas id="studentQR"></canvas>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  let isLoggedIn = false;
+
+  let present = 0;
+
+  let presentStudents = [];
+
+  let absentStudents = [
+    "احمد محمد ذيابات - الصف العاشر / الشعبة أ",
+    "تيسير بشار السنجلاوي - الصف العاشر / الشعبة أ",
+    "احمد خالد الشبول - الصف العاشر / الشعبة أ",
+    "احمد خالد الزريقات - الصف العاشر / الشعبة أ"
+  ];
+
+  let absent = absentStudents.length;
+
+  let qrScanner = null;
+  let isScanning = false;
+
+  document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("presentCount").innerText = present;
+    document.getElementById("absentCount").innerText = absent;
+  });
+
+  function openCamera() {
+    if (!isLoggedIn) {
+      alert("يجب تسجيل الدخول لفتح الكاميرا ❌");
+      return;
+    }
+
+    const closeBtn = document.getElementById("closeCameraBtn");
+    const qrReader = document.getElementById("qr-reader");
+
+    qrReader.style.display = "block";
+    closeBtn.style.display = "block";
+
+    if (isScanning) {
+      return;
+    }
+
+    qrScanner = new Html5Qrcode("qr-reader");
+
+    qrScanner.start(
+      { facingMode: "environment" },
+      {
+        fps: 10,
+        qrbox: 250
+      },
+      function(decodedText) {
+        registerAttendance(decodedText);
+      },
+      function(errorMessage) {
+      }
+    ).then(function() {
+      isScanning = true;
+    }).catch(function(error) {
+      alert("لم يتم السماح بفتح الكاميرا أو حدث خطأ ❌");
+      qrReader.style.display = "none";
+      closeBtn.style.display = "none";
+    });
+  }
+
+  function closeCamera() {
+    const closeBtn = document.getElementById("closeCameraBtn");
+    const qrReader = document.getElementById("qr-reader");
+
+    if (qrScanner && isScanning) {
+      qrScanner.stop().then(function() {
+        qrScanner.clear();
+        qrScanner = null;
+        isScanning = false;
+        qrReader.style.display = "none";
+        closeBtn.style.display = "none";
+      }).catch(function() {
+        qrReader.style.display = "none";
+        closeBtn.style.display = "none";
+      });
+    } else {
+      qrReader.style.display = "none";
+      closeBtn.style.display = "none";
+    }
+  }
+
+  function registerAttendance(qrText) {
+    let studentName = qrText.trim();
+
+    let matchedStudent = absentStudents.find(function(student) {
+      return student.includes(studentName);
+    });
+
+    if (matchedStudent) {
+      if (!presentStudents.includes(matchedStudent)) {
+        presentStudents.push(matchedStudent);
+
+        absentStudents = absentStudents.filter(function(student) {
+          return student !== matchedStudent;
+        });
+
+        present = presentStudents.length;
+        absent = absentStudents.length;
+
+        document.getElementById("presentCount").innerText = present;
+        document.getElementById("absentCount").innerText = absent;
+
+        alert("تم تسجيل حضور الطالب ✅\n" + matchedStudent);
+      } else {
+        alert("هذا الطالب مسجل حاضر مسبقاً");
+      }
+    } else {
+      if (!presentStudents.includes(studentName)) {
+        presentStudents.push(studentName);
+
+        present = presentStudents.length;
+
+        document.getElementById("presentCount").innerText = present;
+
+        alert("تم قراءة QR وتسجيل الحضور ✅\n" + studentName);
+      } else {
+        alert("هذا الطالب مسجل حاضر مسبقاً");
+      }
+    }
+  }
+
+  function openDetails(type) {
+    lastDetailsType = type;
+    const title = document.getElementById("detailsTitle");
+    const count = document.getElementById("detailsCount");
+    const list = document.getElementById("studentList");
+
+    list.innerHTML = "";
+
+    if (type === "present") {
+      title.innerText = "قائمة الحضور";
+      count.innerText = present;
+      count.style.borderColor = "#16a34a";
+
+      if (presentStudents.length === 0) {
+        list.innerHTML = '<div class="info-box">لا يوجد طلاب حاضرين حالياً</div>';
+      } else {
+        presentStudents.forEach(student => {
+          list.innerHTML += `
+            <div class="info-box">
+              ✅ ${student}
+              <button class="qr-btn" onclick="showStudentQR('${student.replace(/'/g, "\\'")}')">QR</button>
+            </div>
+          `;
+        });
+      }
+    }
+
+    if (type === "absent") {
+      title.innerText = "قائمة الغياب";
+      count.innerText = absent;
+      count.style.borderColor = "#dc2626";
+
+      if (absentStudents.length === 0) {
+        list.innerHTML = '<div class="info-box">لا يوجد طلاب غائبين حالياً</div>';
+      } else {
+        absentStudents.forEach(student => {
+          list.innerHTML += `
+            <div class="info-box">
+              ❌ ${student}
+              <button class="qr-btn" onclick="showStudentQR('${student.replace(/'/g, "\\'")}')">QR</button>
+            </div>
+          `;
+        });
+      }
+    }
+
+    showPage("detailsPage");
+  }
+
+  function showPage(id) {
+    document.querySelectorAll(".page").forEach(page => {
+      page.classList.remove("active");
+    });
+    document.getElementById(id).classList.add("active");
+  }
+
+  function loginUser() {
+    const pass = document.getElementById("password").value;
+    const err = document.getElementById("errorMsg");
+
+    if (!pass.startsWith("Taaa@")) {
+      err.style.display = "block";
+      return false;
+    }
+
+    err.style.display = "none";
+    isLoggedIn = true;
+    showPage("secondPage");
+    return false;
+  }
+
+  function goToSecondPage() {
+    showPage("secondPage");
+  }
+
+  function goToLogin() {
+    isLoggedIn = false;
+    closeCamera();
+    showPage("loginPage");
+  }
+
+  function goToProfile() {
+    closeCamera();
+    showPage("profilePage");
+  }
+
+  function exportToExcel() {
+    let csv = "\uFEFFالاسم;الحالة\n";
+
+    presentStudents.forEach(student => {
+      csv += student + ";حاضر\n";
+    });
+
+    absentStudents.forEach(student => {
+      csv += student + ";غائب\n";
+    });
+
+    let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    let link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "attendance.csv";
+    link.click();
+  }
+
+  let lastDetailsType = "absent";
+
+  function goToAddStudent() {
+    showPage("addStudentPage");
+  }
+
+  function goToDetailsPage() {
+    openDetails(lastDetailsType);
+  }
+
+  function addNewStudent() {
+    const name = document.getElementById("studentNameInput").value.trim();
+    const grade = document.getElementById("studentGradeInput").value;
+    const section = document.getElementById("studentSectionInput").value;
+
+    if (name === "") {
+      alert("اكتب اسم الطالب");
+      return;
+    }
+
+    if (grade === "الصف") {
+      alert("اختر الصف");
+      return;
+    }
+
+    if (section === "الشعبة") {
+      alert("اختر الشعبة");
+      return;
+    }
+
+    const student = name + " - " + grade + " / " + section;
+
+    absentStudents.push(student);
+    absent = absentStudents.length;
+
+    document.getElementById("absentCount").innerText = absent;
+
+    document.getElementById("studentNameInput").value = "";
+
+    alert("تمت إضافة الطالب كغياب ✅");
+
+    openDetails("absent");
+  }
+
+  function showStudentQR(student) {
+    document.getElementById("qrStudentName").innerText = student;
+    document.getElementById("qrBox").style.display = "block";
+
+    QRCode.toCanvas(
+      document.getElementById("studentQR"),
+      student,
+      {
+        width: 220,
+        margin: 2
+      }
+    );
+
+    showPage("qrPage");
+  }
+</script>
+
+</body>
+</html>
