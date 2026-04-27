@@ -353,10 +353,10 @@
     <p class="subtitle"> نضام الحضور و الغياب للطلبه من خلال QR</p>
 
     <form onsubmit="return loginUser()">
-      <input type="text" placeholder="الرقم الوطني" required>
+      <input type="text" id="nationalId" placeholder="الرقم الوطني" required>
 
       <input type="password" id="password" placeholder="كلمة السر" required>
-      <div class="hint">يجب أن تبدأ كلمة السر بـ Taaa@</div>
+      <div class="hint">يجب أن تبدأ كلمة السر بـ @Taaa  </div>
 
       <div class="error" id="errorMsg">كلمة السر غير صحيحة</div>
 
@@ -447,8 +447,8 @@
 
     <div class="avatar-big">👤</div>
 
-    <div class="info-box">اسم المعلم: محمد أحمد</div>
-    <div class="info-box">الرقم الوطني: 123456789</div>
+    <div class="info-box" id="profileTeacherName">اسم المعلم: محمد أحمد</div>
+    <div class="info-box" id="profileNationalId">الرقم الوطني: 123456789</div>
 
     <button class="logout-btn" onclick="goToLogin()">تسجيل الخروج</button>
   </div>
@@ -513,7 +513,44 @@
 </section>
 
 <script>
+
+  function playBeep() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + 0.03);
+  }
+  // 🔥 حفظ تسجيل الدخول
+function saveLogin(user) {
+  localStorage.setItem("isLoggedIn", "true");
+  localStorage.setItem("currentUser", JSON.stringify(user));
+}
+
+// 🔥 تحميل تسجيل الدخول
+function loadLogin() {
+  const savedUser = localStorage.getItem("currentUser");
+
+  if (localStorage.getItem("isLoggedIn") === "true" && savedUser) {
+    currentUser = JSON.parse(savedUser);
+    isLoggedIn = true;
+    updateProfileInfo();
+    showPage("secondPage");
+  }
+}
   let isLoggedIn = false;
+  let currentUser = null;
 
   let present = 0;
 
@@ -531,10 +568,49 @@
   let qrScanner = null;
   let isScanning = false;
 
+  const allowedUsers = [
+    { name: "احمد ذيابات", nationalId: "0780835644", password: "Taaa@ahm" },
+    { name: "احمد شبول", nationalId: "0785414811", password: "Taaa@ahma" },
+    { name: "احمد زريقات", nationalId: "0788282656", password: "Taaa@ahmad" },
+    { name: "تيسير السنجلاوي  ", nationalId: "0785032640", password: "Taaa@tay" }
+  ];
+
+  function updateProfileInfo() {
+    if (currentUser) {
+      document.getElementById("profileTeacherName").innerText = "اسم المعلم: " + currentUser.name;
+      document.getElementById("profileNationalId").innerText = "الرقم الوطني: " + currentUser.nationalId;
+    }
+  }
+
+  function saveData() {
+    localStorage.setItem("presentStudents", JSON.stringify(presentStudents));
+    localStorage.setItem("absentStudents", JSON.stringify(absentStudents));
+  }
+
+  function loadData() {
+    const savedPresentStudents = localStorage.getItem("presentStudents");
+    const savedAbsentStudents = localStorage.getItem("absentStudents");
+
+    if (savedPresentStudents) {
+      presentStudents = JSON.parse(savedPresentStudents);
+    }
+
+    if (savedAbsentStudents) {
+      absentStudents = JSON.parse(savedAbsentStudents);
+    }
+
+    present = presentStudents.length;
+    absent = absentStudents.length;
+  }
+
   document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("presentCount").innerText = present;
-    document.getElementById("absentCount").innerText = absent;
-  });
+  loadData();
+
+  document.getElementById("presentCount").innerText = present;
+  document.getElementById("absentCount").innerText = absent;
+
+  loadLogin(); // 🔥 تم الإضافة
+});
 
   function openCamera() {
     if (!isLoggedIn) {
@@ -557,11 +633,23 @@
     qrScanner.start(
       { facingMode: "environment" },
       {
-        fps: 10,
+        fps: 3,
         qrbox: 250
       },
       function(decodedText) {
         registerAttendance(decodedText);
+
+        // 🔥 وقف الكاميرا مباشرة بعد القراءة
+        if (qrScanner && isScanning) {
+          qrScanner.stop().then(() => {
+            isScanning = false;
+
+            // 🔥 رجّع تشغيلها بعد 2 ثانية
+            setTimeout(() => {
+              openCamera();
+            }, 2000);
+          });
+        }
       },
       function(errorMessage) {
       }
@@ -616,7 +704,9 @@
         document.getElementById("presentCount").innerText = present;
         document.getElementById("absentCount").innerText = absent;
 
-        alert("تم تسجيل حضور الطالب ✅\n" + matchedStudent);
+        saveData();
+
+        playBeep();
       } else {
         alert("هذا الطالب مسجل حاضر مسبقاً");
       }
@@ -628,7 +718,9 @@
 
         document.getElementById("presentCount").innerText = present;
 
-        alert("تم قراءة QR وتسجيل الحضور ✅\n" + studentName);
+        saveData();
+
+        playBeep();
       } else {
         alert("هذا الطالب مسجل حاضر مسبقاً");
       }
@@ -692,16 +784,27 @@
   }
 
   function loginUser() {
+    const nationalId = document.getElementById("nationalId").value.trim();
     const pass = document.getElementById("password").value;
     const err = document.getElementById("errorMsg");
 
-    if (!pass.startsWith("Taaa@")) {
+    const user = allowedUsers.find(function(account) {
+      return account.nationalId === nationalId && account.password === pass;
+    });
+
+    if (!user) {
+      err.innerText = "الرقم الوطني أو كلمة السر غير صحيحة";
       err.style.display = "block";
       return false;
     }
 
     err.style.display = "none";
     isLoggedIn = true;
+    currentUser = user;
+
+    saveLogin(user);
+    updateProfileInfo();
+
     showPage("secondPage");
     return false;
   }
@@ -711,12 +814,18 @@
   }
 
   function goToLogin() {
-    isLoggedIn = false;
-    closeCamera();
-    showPage("loginPage");
-  }
+  isLoggedIn = false;
+  currentUser = null;
+
+  localStorage.removeItem("isLoggedIn"); // 🔥 تم الإضافة
+  localStorage.removeItem("currentUser");
+
+  closeCamera();
+  showPage("loginPage");
+}
 
   function goToProfile() {
+    updateProfileInfo();
     closeCamera();
     showPage("profilePage");
   }
@@ -776,6 +885,8 @@
     absent = absentStudents.length;
 
     document.getElementById("absentCount").innerText = absent;
+
+    saveData();
 
     document.getElementById("studentNameInput").value = "";
 
